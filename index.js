@@ -6,12 +6,12 @@ const cors = require('cors')
 const mongoose = require('mongoose')
 const blogsRouter = require('./controllers/blogs')
 
-// if (process.env.NODE_ENV !== 'production') {
-//     require('dotenv').config()
-//   }
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config()
+  }
 
-const mongoUrl = 'mongodb://masa:blogipassu123@ds129428.mlab.com:29428/blogilista-production-db'
-// const mongoUrl =  process.env.MONGODB_URI
+// const mongoUrl = 'mongodb://masa:blogipassu123@ds129428.mlab.com:29428/blogilista-production-db'
+const mongoUrl =  process.env.MONGODB_URI
 mongoose.connect(mongoUrl)
 mongoose.Promise = global.Promise
 
