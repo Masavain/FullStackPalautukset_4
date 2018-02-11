@@ -76,6 +76,91 @@ test('all blogs are returned', async () => {
     expect(response.body.length).toBe(initialBlogs.length)
 })
 
+test('returned blogs contain a specific blog', async () => {
+    const response = await api
+      .get('/api/blogs')
+  
+    const contents = response.body.map(r => r.title)
+  
+    expect(contents).toContain("Go To Statement Considered Harmful")
+  })
+
+
+
+
+test.only('a valid blog can be added ', async () => {
+    const newBlog = {
+      title: 'masan musablogi',
+      author: 'Matti',
+      url: 'asdasd.com',
+      likes: 0
+    }
+  
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+  
+    const response = await api
+      .get('/api/blogs')
+    const titles = response.body.map(r => r.title)
+  
+    expect(response.body.length).toBe(initialBlogs.length + 1)
+    expect(titles).toContain('masan musablogi')
+  })
+
+  test.only('no likes is valid and can be added ', async () => {
+    const newBlog = {
+      title: 'masan musablogi',
+      author: 'Matti',
+      url: 'asdasd.com',
+    }
+  
+    const initialBlogs = await api
+      .get('/api/blogs')
+
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+  
+    const response = await api
+      .get('/api/blogs')
+    const titles = response.body.map(r => r.title)
+  
+    expect(response.body.length).toBe(initialBlogs.body.length + 1)
+    expect(titles).toContain('masan musablogi')
+  })
+  
+  test('blog without title or url is not added ', async () => {
+    const newBlog = {
+        author: 'Matti',
+        url: 'asdasd.com',
+        likes: 0
+      }
+
+    const newBlog2 = {
+        title: 'masan matikkablogi',
+        author: 'Matti',
+      }
+  
+    const initialBlogs = await api
+      .get('/api/blogs')
+  
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(400)
+  
+    const response = await api
+      .get('/api/blogs')
+    
+    expect(response.body.length).toBe(initialBlogs.body.length)
+  })
+  
+
 afterAll(() => {
     server.close()
 })
