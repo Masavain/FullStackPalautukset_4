@@ -62,66 +62,68 @@ const listWithOneBlog = [
     }
 ]
 
-
-test('dummy is called', () => {
-    const blogs = []
-
-    const result = listHelper.dummy(blogs)
-    expect(result).toBe(1)
-})
-
-describe('total likes', () => {
-
-
-    test('when list has only one blog equals the likes of that', () => {
-        const result = listHelper.totalLikes(listWithOneBlog)
-        expect(result).toBe(5)
-    })
-
+describe('list helpers', () => {
+    test('dummy is called', () => {
+        const blogs = []
     
-
-    test('of a bigger list is calculated right', () => {
-        const result = listHelper.totalLikes(biggerlist)
-        expect(result).toBe(36)
+        const result = listHelper.dummy(blogs)
+        expect(result).toBe(1)
     })
-
-    test('of one empty list is zero', () => {
-        const result = listHelper.totalLikes([])
-        expect(result).toBe(0)
-    })
-
-})
-
-describe('favorite blog', () => {
-    test('from bigger list', () => {
-        const result = listHelper.favoriteBlog(biggerlist)
-        expect(result).toEqual({
-            _id: "5a422b3a1b54a676234d17f9",
-            title: "Canonical string reduction",
-            author: "Edsger W. Dijkstra",
-            url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
-            likes: 12,
-            __v: 0
+    
+    describe('total likes', () => {
+    
+    
+        test('when list has only one blog equals the likes of that', () => {
+            const result = listHelper.totalLikes(listWithOneBlog)
+            expect(result).toBe(5)
         })
+    
+        
+    
+        test('of a bigger list is calculated right', () => {
+            const result = listHelper.totalLikes(biggerlist)
+            expect(result).toBe(36)
+        })
+    
+        test('of one empty list is zero', () => {
+            const result = listHelper.totalLikes([])
+            expect(result).toBe(0)
+        })
+    
     })
-})
-
-describe('most blogs', () => {
-    test.only('from bigger list', () => {
-        const result = listHelper.mostBlogs(biggerlist)
-        expect(result).toEqual({
-            author: "Robert C. Martin",
-            blogs: 3
-          })
-    })
-})
-
-describe('most likes', () => {
-    test('from bigger list', () => {
-        const result = listHelper.mostLikes(biggerlist)
-        expect(result).toEqual({
+    
+    describe('favorite blog', () => {
+        test('from bigger list', () => {
+            const result = listHelper.favoriteBlog(biggerlist)
+            expect(result).toEqual({
+                _id: "5a422b3a1b54a676234d17f9",
+                title: "Canonical string reduction",
                 author: "Edsger W. Dijkstra",
-                votes: 17
+                url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
+                likes: 12,
+                __v: 0
+            })
+        })
+    })
+    
+    describe('most blogs', () => {
+        test.only('from bigger list', () => {
+            const result = listHelper.mostBlogs(biggerlist)
+            expect(result).toEqual({
+                author: "Robert C. Martin",
+                blogs: 3
+              })
+        })
+    })
+    
+    describe('most likes', () => {
+        test('from bigger list', () => {
+            const result = listHelper.mostLikes(biggerlist)
+            expect(result).toEqual({
+                    author: "Edsger W. Dijkstra",
+                    votes: 17
+            })
         })
     })
 })
+
