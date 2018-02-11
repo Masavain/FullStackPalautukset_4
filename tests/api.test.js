@@ -125,12 +125,76 @@ describe('initial blogs', async () => {
 
     })
 
+    describe('deletion of a blog', async () => {
+        let addedBlog
+
+        beforeAll(async () => {
+            addedBlog = new Blog({
+                title: 'Masan poistettava blogi',
+                author: 'Matti V',
+                url: 'poistoon.com',
+            })
+            await addedBlog.save()
+        })
+
+        test('DELETE /api/blogs/:id succeeds with proper statuscode', async () => {
+            const blogsAtStart = await blogsInDb()
+      
+            await api
+              .delete(`/api/blogs/${addedBlog._id}`)
+              .expect(204)
+      
+            const blogsAfterOperation = await blogsInDb()
+      
+            const titles = blogsAfterOperation.map(r => r.title)
+      
+            expect(titles).not.toContain(addedBlog.title)
+            expect(blogsAfterOperation.length).toBe(blogsAtStart.length - 1)
+          })
+    })
+
+    describe.only('updating of a blog', async () => {
+        let addedBlog
+
+        beforeAll(async () => {
+            addedBlog = new Blog({
+                title: 'Masan muutettava blogi',
+                author: 'Matti Vee',
+                url: 'muutetaan.com',
+            })
+            await addedBlog.save()
+        })
+
+        test('PUT /api/blogs/:id succeeds with proper statuscode', async () => {
+            const blogsAtStart = await blogsInDb()
+      
+            updatedBlog = new Blog({
+                title: 'Masan muutettava blogi 2',
+                author: 'Matti Vee',
+                url: 'muutetaan.com',
+            })
+
+
+            await api
+              .put(`/api/blogs/${addedBlog._id}`)
+              .send(updatedBlog)
+              .expect(200)
+      
+            const blogsAfterOperation = await blogsInDb()
+      
+            const titles = blogsAfterOperation.map(r => r.title)
+      
+            expect(titles).toContain(updatedBlog.title)
+            expect(blogsAfterOperation.length).toBe(blogsAtStart.length)
+          })
+
+    })
+
+
+
+
 
 })
-
-
-
-
 
 
 
