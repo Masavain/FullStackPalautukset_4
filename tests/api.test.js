@@ -2,164 +2,137 @@ const supertest = require('supertest')
 const { app, server } = require('../index')
 const api = supertest(app)
 const Blog = require('../models/blog')
+const { initialBlogs, nonExistingId, blogsInDb } = require('./test_helper')
 
-const initialBlogs = [
-    {
-        _id: "5a422a851b54a676234d17f7",
-        title: "React patterns",
-        author: "Michael Chan",
-        url: "https://reactpatterns.com/",
-        likes: 7,
-        __v: 0
-    },
-    {
-        _id: "5a422aa71b54a676234d17f8",
-        title: "Go To Statement Considered Harmful",
-        author: "Edsger W. Dijkstra",
-        url: "http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html",
-        likes: 5,
-        __v: 0
-    },
-    {
-        _id: "5a422b3a1b54a676234d17f9",
-        title: "Canonical string reduction",
-        author: "Edsger W. Dijkstra",
-        url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
-        likes: 12,
-        __v: 0
-    },
-    {
-        _id: "5a422b891b54a676234d17fa",
-        title: "First class tests",
-        author: "Robert C. Martin",
-        url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll",
-        likes: 10,
-        __v: 0
-    },
-    {
-        _id: "5a422ba71b54a676234d17fb",
-        title: "TDD harms architecture",
-        author: "Robert C. Martin",
-        url: "http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html",
-        likes: 0,
-        __v: 0
-    },
-    {
-        _id: "5a422bc61b54a676234d17fc",
-        title: "Type wars",
-        author: "Robert C. Martin",
-        url: "http://blog.cleancoder.com/uncle-bob/2016/05/01/TypeWars.html",
-        likes: 2,
-        __v: 0
-    }
-]
+describe('initial blogs', async () => {
+    beforeAll(async () => {
+        await Blog.remove({})
 
-beforeAll(async () => {
-    await Blog.remove({})
+        const blogObjects = initialBlogs.map(b => new Blog(b))
+        await Promise.all(blogObjects.map(b => b.save()))
+    })
 
-    const blogObjects = initialBlogs.map(b => new Blog(b))
-    const promiseArray = blogObjects.map(b => b.save())
-    await Promise.all(promiseArray)
+    test('all blogs are returned as json by GET /api/blogs', async () => {
+        const blogsInDatabase = await blogsInDb()
+
+        const response = await api
+            .get('/api/blogs')
+            .expect(200)
+            .expect('Content-Type', /application\/json/)
+
+        expect(response.body.length).toBe(blogsInDatabase.length)
+
+        const returnedTitles = response.body.map(p => p.title)
+        blogsInDatabase.forEach(blog => {
+            expect(returnedTitles).toContain(blog.title)
+        })
+    })
+
+    test('individual blog is returned as json by GET /api/blogs', async () => {
+        const blogsInDatabase = await blogsInDb()
+        const aBlog = blogsInDatabase[0]
+
+        const response = await api
+            .get('/api/blogs')
+            .expect(200)
+            .expect('Content-Type', /application\/json/)
+
+
+        const returnedTitles = response.body.map(r => r.title)
+
+        expect(returnedTitles).toContain(aBlog.title)
+    })
+
+    describe('addition of a new blog', async () => {
+
+        test('POST /api/blogs succeeds with valid data', async () => {
+            const blogsAtStart = await blogsInDb()
+
+            const newBlog = {
+                title: 'masan musablogi',
+                author: 'Matti',
+                url: 'asdasd.com',
+                likes: 0
+            }
+
+            await api
+                .post('/api/blogs')
+                .send(newBlog)
+                .expect(201)
+                .expect('Content-Type', /application\/json/)
+
+            const blogsAfterOperation = await blogsInDb()
+
+            expect(blogsAfterOperation.length).toBe(blogsAtStart.length + 1)
+
+            const titles = blogsAfterOperation.map(r => r.title)
+            expect(titles).toContain('masan musablogi')
+        })
+
+        test('no likes is valid and can be added by POST /api/blogs', async () => {
+            const blogsAtStart = await blogsInDb()
+
+            const newBlog = {
+                title: 'masan musablogi',
+                author: 'Matti',
+                url: 'asdasd.com',
+            }
+
+            await api
+                .post('/api/blogs')
+                .send(newBlog)
+                .expect(201)
+                .expect('Content-Type', /application\/json/)
+
+            const blogsAfterOperation = await blogsInDb()
+            expect(blogsAfterOperation.length).toBe(blogsAtStart.length + 1)
+
+            const titles = blogsAfterOperation.map(r => r.title)
+
+            expect(titles).toContain('masan musablogi')
+        })
+
+        test('blog without title or url fails by POST /api/blogs and proper statuscode', async () => {
+            const blogsAtStart = await blogsInDb()
+
+            const newBlog = {
+                author: 'Matti',
+                url: 'asdasd.com',
+                likes: 0
+            }
+
+            const newBlog2 = {
+                title: 'masan matikkablogi',
+                author: 'Matti',
+            }
+
+            await api
+                .post('/api/blogs')
+                .send(newBlog)
+                .expect(400)
+
+            await api
+                .post('/api/blogs')
+                .send(newBlog2)
+                .expect(400)
+
+            const blogsAfterOperation = await blogsInDb()
+            expect(blogsAfterOperation.length).toBe(blogsAtStart.length)
+
+            const titles = blogsAfterOperation.map(r => r.title)
+            expect(titles).not.toContain('masan matikkablogi')
+        })
+
+    })
+
+
 })
 
-test('blogs are returned as json', async () => {
-    await api
-        .get('/api/blogs')
-        .expect(200)
-        .expect('Content-Type', /application\/json/)
-})
-
-test('all blogs are returned', async () => {
-    const response = await api
-        .get('/api/blogs')
-
-    expect(response.body.length).toBe(initialBlogs.length)
-})
-
-test('returned blogs contain a specific blog', async () => {
-    const response = await api
-      .get('/api/blogs')
-  
-    const contents = response.body.map(r => r.title)
-  
-    expect(contents).toContain("Go To Statement Considered Harmful")
-  })
 
 
 
 
-test.only('a valid blog can be added ', async () => {
-    const newBlog = {
-      title: 'masan musablogi',
-      author: 'Matti',
-      url: 'asdasd.com',
-      likes: 0
-    }
-  
-    await api
-      .post('/api/blogs')
-      .send(newBlog)
-      .expect(201)
-      .expect('Content-Type', /application\/json/)
-  
-    const response = await api
-      .get('/api/blogs')
-    const titles = response.body.map(r => r.title)
-  
-    expect(response.body.length).toBe(initialBlogs.length + 1)
-    expect(titles).toContain('masan musablogi')
-  })
 
-  test.only('no likes is valid and can be added ', async () => {
-    const newBlog = {
-      title: 'masan musablogi',
-      author: 'Matti',
-      url: 'asdasd.com',
-    }
-  
-    const initialBlogs = await api
-      .get('/api/blogs')
-
-    await api
-      .post('/api/blogs')
-      .send(newBlog)
-      .expect(201)
-      .expect('Content-Type', /application\/json/)
-  
-    const response = await api
-      .get('/api/blogs')
-    const titles = response.body.map(r => r.title)
-  
-    expect(response.body.length).toBe(initialBlogs.body.length + 1)
-    expect(titles).toContain('masan musablogi')
-  })
-  
-  test('blog without title or url is not added ', async () => {
-    const newBlog = {
-        author: 'Matti',
-        url: 'asdasd.com',
-        likes: 0
-      }
-
-    const newBlog2 = {
-        title: 'masan matikkablogi',
-        author: 'Matti',
-      }
-  
-    const initialBlogs = await api
-      .get('/api/blogs')
-  
-    await api
-      .post('/api/blogs')
-      .send(newBlog)
-      .expect(400)
-  
-    const response = await api
-      .get('/api/blogs')
-    
-    expect(response.body.length).toBe(initialBlogs.body.length)
-  })
-  
 
 afterAll(() => {
     server.close()
