@@ -15,11 +15,44 @@ const favoriteBlog = (blogs) => {
     }
     return blogs.reduce(reducer,0)
     
-
 }
+
+const mostBlogs = (blogs) => {
+    var max = 0
+    var result
+    const frequency = {}
+    for (let i = 0; i < blogs.length; i++) {
+        frequency[blogs[i].author]=frequency[blogs[i].author] === undefined
+        ? 1: frequency[blogs[i].author] = frequency[blogs[i].author]+1
+        if (frequency[blogs[i].author] > max) {
+            max = frequency[blogs[i].author]
+            result = blogs[i].author
+        }
+    }
+    return ({"author": result, "blogs": max})
+}
+
+const mostLikes = (blogs) => {
+    var max = 0
+    var result
+    const frequency = {}
+    for (let i = 0; i < blogs.length; i++) {
+        frequency[blogs[i].author]=frequency[blogs[i].author] === undefined
+        ? blogs[i].likes: frequency[blogs[i].author] = frequency[blogs[i].author]+blogs[i].likes
+        if (frequency[blogs[i].author] > max) {
+            max = frequency[blogs[i].author]
+            result = blogs[i].author
+        }
+
+    }
+    return ({"author": result, "votes": max})
+}
+
 
 module.exports = {
     dummy,
     totalLikes,
-    favoriteBlog
+    favoriteBlog,
+    mostBlogs,
+    mostLikes
 }

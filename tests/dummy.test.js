@@ -105,3 +105,23 @@ describe('favorite blog', () => {
         })
     })
 })
+
+describe('most blogs', () => {
+    test.only('from bigger list', () => {
+        const result = listHelper.mostBlogs(biggerlist)
+        expect(result).toEqual({
+            author: "Robert C. Martin",
+            blogs: 3
+          })
+    })
+})
+
+describe('most likes', () => {
+    test('from bigger list', () => {
+        const result = listHelper.mostLikes(biggerlist)
+        expect(result).toEqual({
+                author: "Edsger W. Dijkstra",
+                votes: 17
+        })
+    })
+})
