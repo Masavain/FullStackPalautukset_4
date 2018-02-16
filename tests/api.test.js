@@ -2,7 +2,8 @@ const supertest = require('supertest')
 const { app, server } = require('../index')
 const api = supertest(app)
 const Blog = require('../models/blog')
-const { initialBlogs, nonExistingId, blogsInDb } = require('./test_helper')
+const User = require('../models/user')
+const { format, initialBlogs, nonExistingId, blogsInDb, usersInDb } = require('./test_helper')
 
 describe('initial blogs', async () => {
     beforeAll(async () => {
@@ -139,18 +140,18 @@ describe('initial blogs', async () => {
 
         test('DELETE /api/blogs/:id succeeds with proper statuscode', async () => {
             const blogsAtStart = await blogsInDb()
-      
+
             await api
-              .delete(`/api/blogs/${addedBlog._id}`)
-              .expect(204)
-      
+                .delete(`/api/blogs/${addedBlog._id}`)
+                .expect(204)
+
             const blogsAfterOperation = await blogsInDb()
-      
+
             const titles = blogsAfterOperation.map(r => r.title)
-      
+
             expect(titles).not.toContain(addedBlog.title)
             expect(blogsAfterOperation.length).toBe(blogsAtStart.length - 1)
-          })
+        })
     })
 
     describe.only('updating of a blog', async () => {
@@ -167,27 +168,91 @@ describe('initial blogs', async () => {
 
         test('PUT /api/blogs/:id succeeds with proper statuscode', async () => {
             const blogsAtStart = await blogsInDb()
-      
+
             updatedBlog = new Blog({
                 title: 'Masan muutettava blogi 2',
                 author: 'Matti Vee',
                 url: 'muutetaan.com',
             })
 
-
             await api
-              .put(`/api/blogs/${addedBlog._id}`)
-              .send(updatedBlog)
-              .expect(200)
-      
+                .put(`/api/blogs/${addedBlog._id}`)
+                .send(updatedBlog)
+                .expect(200)
+
             const blogsAfterOperation = await blogsInDb()
-      
             const titles = blogsAfterOperation.map(r => r.title)
-      
+
             expect(titles).toContain(updatedBlog.title)
             expect(blogsAfterOperation.length).toBe(blogsAtStart.length)
-          })
+        })
 
+    })
+
+    describe.only('when there is initially one user at db', async () => {
+        beforeAll(async () => {
+            await User.remove({})
+            const user = new User({ username: 'root', password: 'sekret' })
+            await user.save()
+        })
+
+        test('POST /api/users succeeds with a fresh username', async () => {
+            const usersBeforeOperation = await usersInDb()
+
+            const newUser = {
+                username: 'mluukkai',
+                name: 'Matti Luukkainen',
+                password: 'salainen'
+            }
+
+            await api
+                .post('/api/users')
+                .send(newUser)
+                .expect(200)
+                .expect('Content-Type', /application\/json/)
+
+            const usersAfterOperation = await usersInDb()
+            expect(usersAfterOperation.length).toBe(usersBeforeOperation.length + 1)
+            const usernames = usersAfterOperation.map(u => u.username)
+            expect(usernames).toContain(newUser.username)
+        })
+
+        test('POST /api/users fails with proper statuscode and message if username already taken or password too short', async () => {
+            const usersBeforeOperation = await usersInDb()
+
+            const newUser = {
+                username: 'root',
+                name: 'Superuser',
+                password: 'salainen'
+            }
+
+            const newUser2 = {
+                username: 'testi',
+                name: 'testi',
+                password: 'aa'
+            }
+
+            const result = await api
+                .post('/api/users')
+                .send(newUser)
+                .expect(400)
+                .expect('Content-Type', /application\/json/)
+
+            expect(result.body).toEqual({ error: 'username must be unique' })
+
+            const result2 = await api
+                .post('/api/users')
+                .send(newUser2)
+                .expect(400)
+                .expect('Content-Type', /application\/json/)
+
+            expect(result2.body).toEqual({ error: 'password too short (must be at least 3 characters long)' })
+
+            const usersAfterOperation = await usersInDb()
+            expect(usersAfterOperation.length).toBe(usersBeforeOperation.length)
+        })
+
+        
     })
 
 
